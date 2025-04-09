@@ -1,7 +1,9 @@
 ---
 path_to_data: "" # Full path to data folder.
-prefix: "" # EIGENSTRAT .ped or .bed formats are supported.
+prefix: "" # .ped or .bed formats are supported.
 output_folder: "" # Path to output folder. Folders that do not exist will be created.
 run_name: "" # Specify a name for the run.
 threads: 1 # Number of threads for pararellization of ADMIXTURE call.
 cv_error: 10 # The maximum K that cross validation error is going to run.
+family_file: ""
+metdata_file: "" 
