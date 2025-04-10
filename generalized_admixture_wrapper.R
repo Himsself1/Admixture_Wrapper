@@ -26,7 +26,7 @@ if( file.exists( yaml_input ) ){
 
 input_files <- list.files(path = input_params$path_to_data,
            pattern = input_params$prefix)
-if( length(eig_files) < 3 ){
+if( length(input_files) < 3 ){
   cat(sprintf("Input files missing or incomplete. \n"))
   stop("Stop 2")
 }else{
