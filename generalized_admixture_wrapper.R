@@ -30,9 +30,9 @@ if( length(input_files) < 3 ){
   cat(sprintf("Input files missing or incomplete. \n"))
   stop("Stop 2")
 }else{
-  initial_file <- grep("bed$", input_files, value = TRUE)
+  initial_file <- grep("bed$|ped$", input_files, value = TRUE)
   ## print(initial_file)
-  initial_prefix <- gsub("\\.bed", "", initial_file)
+  initial_prefix <- gsub("\\.bed|\\.ped", "", initial_file)
   ## This may be wrong when prefix is matched by more than one triplet.
   if( length(initial_file) > 1 ){
     cat(sprintf("More than one inputs match the prefix. Please rename. \n"))
@@ -53,27 +53,32 @@ dir.create(out_dir_for_data, recursive = TRUE)
 
 # * Call Plink for trimming
 
-## Need to modify this in order to remove relatives! ##
+# ** Remove Relatives if file is provided
 
-# ** Remove Relatives
-
-no_family_prefix <- paste0(
-  c(out_dir_for_data,
-    input_params$prefix,
-    "_no_family"), collapse = ''
-)
-
-command_for_plink_relatives <- paste0(
-  c(
-    "plink --bfile", initial_prefix,
-    "--remove", input_params$family_file,
-    "--out", no_family_prefix, 
-    "--make-bed --allow-no-sex --keep-allele-order --no-pheno"
-  ),
-  collapse = ' '
-)
-print(command_for_plink_relatives)
-system(command_for_plink_relatives)
+if( input_params$family_file > 1 ){
+  no_family_prefix <- paste0(
+    c(out_dir_for_data,
+      input_params$prefix,
+      "_no_family"), collapse = ''
+  )
+  
+  command_for_plink_relatives <- paste0(
+    c(
+      "plink --bfile", initial_prefix,
+      "--remove", input_params$family_file,
+      "--out", no_family_prefix, 
+      "--make-bed --allow-no-sex --keep-allele-order --no-pheno"
+    ),
+    collapse = ' '
+  )
+  print(command_for_plink_relatives)
+  system(command_for_plink_relatives)
+} else {
+  no_family_prefix <- paste0(
+    c(out_dir_for_data, input_params$prefix),
+    collapse = ''
+  )
+}
 
 # ** Filter SNPs in LD
 
@@ -90,7 +95,8 @@ command_for_plink_filtering <- paste0(
     "--indep-pairwise 200 25 0.8", "--maf 0.05",
     "--out", filter_prefix,
     "--allow-no-sex --keep-allele-order --no-pheno"
-  ), collapse = ' '
+  ),
+  collapse = ' '
 )
 print(command_for_plink_filtering)
 system(command_for_plink_filtering)
@@ -140,7 +146,7 @@ registerDoMC(input_params$threads)
 cv_error_file <- paste0( c(out_dir_for_stats, input_params$name, "cv_errors.csv"), collapse = "" )
 
 admixture_output_names <- c()
-for(i in 2:input_params$cv_error){
+for(i in 2:input_params$max_K){
   temp_output <- paste0(c(
     out_dir_for_stats,
     input_params$name,
@@ -152,9 +158,9 @@ for(i in 2:input_params$cv_error){
 # ** System calls
 
 setwd( out_dir_for_stats )
-sporos <- runif(input_params$cv_error)
+sporos <- runif(input_params$max_K)
 
-foreach(i = 2:input_params$cv_error) %dopar% {
+foreach(i = 2:input_params$max_K) %dopar% {
   cmd <- noquote(paste0(c(
     "admixture32 --cv",
     initial_file, i,
@@ -179,18 +185,18 @@ for (i in 1:length(admixture_output_names)) {
   system(cmd)
 }
 
-# * Plotting
+# * Plotting 
 
-## Make command for plotting script
+## ## Make command for plotting script
 
-setwd(current_dir)
-plotting_command <- paste0(c(
-  "Rscript generalized_plotting.R -input_folder", out_dir_for_stats,
-  "-plot_folder", out_dir_for_plots,
-  "-prefix", trimmed_prefix,
-  "-label_file", fam_file,
-  "-meta", input_params$metadata_file
-), collapse = ' ')
+## setwd(current_dir)
+## plotting_command <- paste0(c(
+##   "Rscript generalized_plotting.R -input_folder", out_dir_for_stats,
+##   "-plot_folder", out_dir_for_plots,
+##   "-prefix", trimmed_prefix,
+##   "-label_file", fam_file,
+##   "-meta", input_params$metadata_file
+## ), collapse = ' ')
 
-print(plotting_command)
-system(plotting_command)
+## print(plotting_command)
+## system(plotting_command)

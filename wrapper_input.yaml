@@ -3,7 +3,7 @@ path_to_data: "" # Full path to data folder.
 prefix: "" # .ped or .bed formats are supported.
 output_folder: "" # Path to output folder. Folders that do not exist will be created.
 run_name: "" # Specify a name for the run.
-threads: 2 # Number of threads for pararellization of ADMIXTURE call.
-cv_error: 10 # The maximum K that cross validation error is going to run.
-family_file: ""
-metdata_file: "" 
+max_K: 10 # The maximum K that cross validation error is going to run. 
+threads: 2 # Number of threads for pararellization of ADMIXTURE call. This doesn't run ADMIXTURE in multi-threaded mode, rather makes ADMIXTURE calls parallel. No point in this being larger than max_K
+family_file: "" # Space delimited file that contains relatives in the sample that need to be removed. Leave empty if not needed.
+# metdata_file: "" 
