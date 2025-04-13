@@ -164,7 +164,7 @@ foreach(i = 2:input_params$max_K) %dopar% {
   cmd <- noquote(paste0(c(
     "admixture32 --cv",
     initial_file, i,
-    '--haploid="*" --seed time | tee',
+    '--haploid="male:23,24" --seed time | tee',
     admixture_output_names[i-1]
   ), collapse = " "))
   print(cmd)
