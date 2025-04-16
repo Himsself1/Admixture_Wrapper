@@ -67,7 +67,7 @@ if( input_params$family_file > 1 ){
       "plink2 --bfile", initial_prefix,
       "--remove", input_params$family_file,
       "--out", no_family_prefix,
-      "--chr 1-22 --make-bed --allow-no-sex --keep-allele-order --no-pheno"
+      "--chr 1-22 --make-bed --allow-no-sex --keep-allele-order --no-pheno --set-all-var-ids '@_#_$r_$a' "
     ),
     collapse = ' '
   )
@@ -92,7 +92,7 @@ filter_prefix <- paste0(
 command_for_plink_filtering <- paste0(
   c( 
     "plink2 --bfile", no_family_prefix,
-    "--indep-pairwise 200 25 0.8", "--maf 0.05",
+    "--indep-pairwise 100 10 0.3", "--maf 0.05",
     "--out", filter_prefix,
     "--allow-no-sex --keep-allele-order --no-pheno"
   ),
@@ -126,13 +126,24 @@ command_for_plink_trimming <- paste0(
   ),
   collapse = " "
 )
-
 print(command_for_plink_trimming)
 system(command_for_plink_trimming)
 
 ## Need this for the final plotting
 fam_file <- grep(
   ".fam",
+  list.files(out_dir_for_data, pattern = basename(trimmed_prefix), full.names = T),
+  value = T
+)
+
+bim_file <- grep(
+  ".bim",
+  list.files(out_dir_for_data, pattern = basename(trimmed_prefix), full.names = T),
+  value = T
+)
+
+bed_file <- grep(
+  ".bed",
   list.files(out_dir_for_data, pattern = basename(trimmed_prefix), full.names = T),
   value = T
 )
@@ -163,8 +174,8 @@ sporos <- runif(input_params$max_K)
 foreach(i = 2:input_params$max_K) %dopar% {
   cmd <- noquote(paste0(c(
     "admixture32 --cv",
-    initial_file, i,
-    '--haploid="*" --seed time | tee',
+    bed_file, i,
+    '--seed time | tee',
     admixture_output_names[i-1]
   ), collapse = " "))
   print(cmd)
