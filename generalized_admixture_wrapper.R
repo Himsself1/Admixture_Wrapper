@@ -41,7 +41,7 @@ if( length(input_files) < 3 ){
 }
 
 # ** Create output folders
-current_dir <- getwd()
+initial_dir <- getwd()
 out_dir_full_name <- paste0(c(input_params$output_folder, input_params$run_name), collapse = '/')
 out_dir_for_data <- paste0(c(out_dir_full_name, "/data/"), collapse = '')
 out_dir_for_plots <- paste0(c(out_dir_full_name, "/plots/"), collapse = '')
@@ -64,10 +64,10 @@ if( input_params$family_file > 1 ){
   
   command_for_plink_relatives <- paste0(
     c(
-      "plink --bfile", initial_prefix,
+      "plink2 --bfile", initial_prefix,
       "--remove", input_params$family_file,
-      "--out", no_family_prefix, 
-      "--make-bed --allow-no-sex --keep-allele-order --no-pheno"
+      "--out", no_family_prefix,
+      "--chr 1-22 --make-bed --allow-no-sex --keep-allele-order --no-pheno"
     ),
     collapse = ' '
   )
@@ -91,7 +91,7 @@ filter_prefix <- paste0(
 ## This command outputs a file containing the SNPs that pass the filtering.
 command_for_plink_filtering <- paste0(
   c( 
-    "plink --bfile", no_family_prefix,
+    "plink2 --bfile", no_family_prefix,
     "--indep-pairwise 200 25 0.8", "--maf 0.05",
     "--out", filter_prefix,
     "--allow-no-sex --keep-allele-order --no-pheno"
@@ -119,7 +119,7 @@ trimmed_prefix <- paste0(
 ## This command generates a new .bed file that contains only the SNPs that pass the filtering.
 command_for_plink_trimming <- paste0(
   c(
-    "plink --bfile", no_family_prefix,
+    "plink2 --bfile", no_family_prefix,
     "--extract", pruned_in, "--make-bed",
     "--out", trimmed_prefix,
     "--allow-no-sex --keep-allele-order --no-pheno"
@@ -189,7 +189,7 @@ for (i in 1:length(admixture_output_names)) {
 
 ## ## Make command for plotting script
 
-## setwd(current_dir)
+## setwd(initial_dir)
 ## plotting_command <- paste0(c(
 ##   "Rscript generalized_plotting.R -input_folder", out_dir_for_stats,
 ##   "-plot_folder", out_dir_for_plots,
