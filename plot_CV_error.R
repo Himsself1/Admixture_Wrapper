@@ -34,32 +34,36 @@ parser$add_argument("-name",
 
 
 arguments <- parser$parse_args()
-if (!dir.exists(plot_folder)) {
-  dir.create(plot_folder, recursive = T)
+if (!dir.exists(arguments$plot_folder)) {
+  dir.create(arguments$plot_folder, recursive = T)
   print("Created plot folder and parents")
 }
 
 to_plot <- read.csv(file = arguments$input_file, header = FALSE)
 
-colanames(to_plot) <- c("K", "Error")
+colnames(to_plot) <- c("K", "Error")
 
-plot_ks <- ggplot(data = to_plot, aes(as.factor(K), Errors, fill = "red")) +
+plot_ks <- ggplot(data = to_plot, aes(as.factor(K), Error, fill = "red")) +
   geom_point(color = "black", alpha = 0.8, shape = 21, size = 6) +
   geom_line() +
-  xlab("K") + 
+  labs(
+    title = "Admixture CV Error",
+    x = "K",
+    y = "Error"
+  ) +
   theme( 
+    plot.title = element_text(size = 30, hjust = 0.5),
     strip.text = element_text(size = 17),
     axis.title = element_text(size = 18),
     axis.text = element_text(size = 14),
-    legend.title = element_text(size = 17),
-    legend.text = element_text(size = 14)
+    legend.position = "none"
   )
 
 plot_file_name_pdf <- file.path(
-  parser$plot_folder,
-  paste0(c(parser$name, "_cv_errors.pdf"), collapse = '')
+  arguments$plot_folder,
+  paste0(c(arguments$name, "_cv_errors.pdf"), collapse = '')
 )
 
-Cairo(file = plot_file_name_pdf, type = "pdf", width = 1024, height = 1024)
+Cairo(file = plot_file_name_pdf, type = "pdf", width = 1024, height = 1024, dpi = 80)
 print(plot_ks)
 dev.off()

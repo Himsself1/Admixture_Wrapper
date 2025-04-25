@@ -88,65 +88,79 @@ filter_prefix <- paste0(
     "_filtered"), collapse = ''
 )
 
+if( input_params$ld_prune == TRUE ){
 ## This command outputs a file containing the SNPs that pass the filtering.
-command_for_plink_filtering <- paste0(
-  c( 
-    "plink2 --bfile", no_family_prefix,
-    "--indep-pairwise 100 10 0.3", "--maf 0.05",
-    "--out", filter_prefix,
-    "--allow-no-sex --keep-allele-order --no-pheno"
-  ),
-  collapse = ' '
-)
-print(command_for_plink_filtering)
-system(command_for_plink_filtering)
+  command_for_plink_filtering <- paste0(
+    c( 
+      "plink2 --bfile", no_family_prefix,
+      "--indep-pairwise", input_params$ld_window, input_params$ld_step, input_params$ld_r,
+      "--maf 0.05",
+      "--out", filter_prefix,
+      "--allow-no-sex --keep-allele-order --no-pheno"
+    ),
+    collapse = ' '
+  )
+  print(command_for_plink_filtering)
+  system(command_for_plink_filtering)
+  pruned_in <- grep(
+    "prune.in",
+    list.files(out_dir_for_data, pattern = basename(filter_prefix), full.names = T),
+    value = T
+  )
+  ## Get the name of the pruned_in snp file
+  trimmed_prefix <- paste0(
+    c(out_dir_for_data,
+      input_params$prefix,
+      "_trimmed"), collapse = ''
+  )
+  ## This command generates a new .bed file that contains only the SNPs that pass the filtering.
+  command_for_plink_trimming <- paste0(
+    c(
+      "plink2 --bfile", no_family_prefix,
+      "--extract", pruned_in, "--make-bed",
+      "--out", trimmed_prefix,
+      "--allow-no-sex --keep-allele-order --no-pheno"
+    ),
+    collapse = " "
+  )
+  print(command_for_plink_trimming)
+  system(command_for_plink_trimming)
+  # These are the names of input files for ADMIXTURE and plots.
+  fam_file <- grep(
+    ".fam",
+    list.files(out_dir_for_data, pattern = basename(trimmed_prefix), full.names = T),
+    value = T
+  )
+  bim_file <- grep(
+    ".bim",
+    list.files(out_dir_for_data, pattern = basename(trimmed_prefix), full.names = T),
+    value = T
+  )
+  bed_file <- grep(
+    ".bed",
+    list.files(out_dir_for_data, pattern = basename(trimmed_prefix), full.names = T),
+    value = T
+  )
 
-# ** Trim SNPs
+} else {
+  fam_file <- grep(
+    ".fam",
+    list.files(out_dir_for_data, pattern = basename(no_family_prefix), full.names = T),
+    value = T
+  )
+  bim_file <- grep(
+    ".bim",
+    list.files(out_dir_for_data, pattern = basename(no_family_prefix), full.names = T),
+    value = T
+  )
+  bed_file <- grep(
+    ".bed",
+    list.files(out_dir_for_data, pattern = basename(no_family_prefix), full.names = T),
+    value = T
+  )
+}
 
-## Get the name of the pruned_in snp file
-pruned_in <- grep(
-  "prune.in",
-  list.files(out_dir_for_data, pattern = basename(filter_prefix), full.names = T),
-  value = T
-)
 
-trimmed_prefix <- paste0(
-  c(out_dir_for_data,
-    input_params$prefix,
-    "_trimmed"), collapse = ''
-)
-
-## This command generates a new .bed file that contains only the SNPs that pass the filtering.
-command_for_plink_trimming <- paste0(
-  c(
-    "plink2 --bfile", no_family_prefix,
-    "--extract", pruned_in, "--make-bed",
-    "--out", trimmed_prefix,
-    "--allow-no-sex --keep-allele-order --no-pheno"
-  ),
-  collapse = " "
-)
-print(command_for_plink_trimming)
-system(command_for_plink_trimming)
-
-## Need this for the final plotting
-fam_file <- grep(
-  ".fam",
-  list.files(out_dir_for_data, pattern = basename(trimmed_prefix), full.names = T),
-  value = T
-)
-
-bim_file <- grep(
-  ".bim",
-  list.files(out_dir_for_data, pattern = basename(trimmed_prefix), full.names = T),
-  value = T
-)
-
-bed_file <- grep(
-  ".bed",
-  list.files(out_dir_for_data, pattern = basename(trimmed_prefix), full.names = T),
-  value = T
-)
 
 # * Running ADMIXTURE
 
@@ -198,16 +212,28 @@ for (i in 1:length(admixture_output_names)) {
 
 # * Plotting 
 
+setwd(initial_dir)
+
+plot_cv_error_command <- paste0(c(
+  "Rscript plot_CV_error.R",
+  "-plot_folder", out_dir_for_plots,
+  "-input_file", cv_error_file,
+  "-name", input_params$run_name
+), collapse = ' ')
+
+print(plot_cv_error_command)
+system(plot_cv_error_command)
+
 ## ## Make command for plotting script
 
-## setwd(initial_dir)
-## plotting_command <- paste0(c(
-##   "Rscript generalized_plotting.R -input_folder", out_dir_for_stats,
-##   "-plot_folder", out_dir_for_plots,
-##   "-prefix", trimmed_prefix,
-##   "-label_file", fam_file,
-##   "-meta", input_params$metadata_file
-## ), collapse = ' ')
+plotting_command <- paste0(c(
+  "Rscript generalized_plotting.R -input_folder", out_dir_for_stats,
+  "-plot_folder", out_dir_for_plots,
+  "-prefix", trimmed_prefix,
+  "-label_file", fam_file,
+  "-meta", input_params$metadata_file,
+  "-name", input_params$run_name
+), collapse = ' ')
 
 ## print(plotting_command)
-## system(plotting_command)
+system(plotting_command)
