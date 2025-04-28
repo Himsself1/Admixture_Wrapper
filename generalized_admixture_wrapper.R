@@ -42,10 +42,10 @@ if( length(input_files) < 3 ){
 
 # ** Create output folders
 initial_dir <- getwd()
-out_dir_full_name <- paste0(c(input_params$output_folder, input_params$run_name), collapse = '/')
-out_dir_for_data <- paste0(c(out_dir_full_name, "/data/"), collapse = '')
-out_dir_for_plots <- paste0(c(out_dir_full_name, "/plots/"), collapse = '')
-out_dir_for_stats <- paste0(c(out_dir_full_name, "/stats/"), collapse = '')
+out_dir_full_name <- file.path(input_params$output_folder, input_params$run_name)
+out_dir_for_data <- file.path(out_dir_full_name, "data")
+out_dir_for_plots <- file.path(out_dir_full_name, "plots") 
+out_dir_for_stats <- file.path(out_dir_full_name, "stats")
 dir.create(out_dir_for_plots, recursive = TRUE)
 dir.create(out_dir_for_stats, recursive = TRUE)
 dir.create(out_dir_for_data, recursive = TRUE)
@@ -56,10 +56,12 @@ dir.create(out_dir_for_data, recursive = TRUE)
 # ** Remove Relatives if file is provided
 
 if( input_params$family_file > 1 ){
-  no_family_prefix <- paste0(
-    c(out_dir_for_data,
+  no_family_prefix <- file.path(
+    out_dir_for_data,
+    paste0(c(
       input_params$prefix,
       "_no_family"), collapse = ''
+      )
   )
   
   command_for_plink_relatives <- paste0(
@@ -74,18 +76,17 @@ if( input_params$family_file > 1 ){
   print(command_for_plink_relatives)
   system(command_for_plink_relatives)
 } else {
-  no_family_prefix <- paste0(
-    c(out_dir_for_data, input_params$prefix),
-    collapse = ''
-  )
+  no_family_prefix <- file.path(out_dir_for_data, input_params$prefix)
 }
 
 # ** Filter SNPs in LD
 
-filter_prefix <- paste0(
-  c(out_dir_for_data,
+filter_prefix <- file.path(
+  out_dir_for_data,
+  paste0(c(
     input_params$prefix,
     "_filtered"), collapse = ''
+    )
 )
 
 if( input_params$ld_prune == TRUE ){
@@ -108,10 +109,10 @@ if( input_params$ld_prune == TRUE ){
     value = T
   )
   ## Get the name of the pruned_in snp file
-  trimmed_prefix <- paste0(
-    c(out_dir_for_data,
-      input_params$prefix,
-      "_trimmed"), collapse = ''
+  trimmed_prefix <- file.path(
+    out_dir_for_data,
+    paste0(c(input_params$prefix,
+             "_trimmed"), collapse = '')
   )
   ## This command generates a new .bed file that contains only the SNPs that pass the filtering.
   command_for_plink_trimming <- paste0(
@@ -161,14 +162,16 @@ if( input_params$ld_prune == TRUE ){
 }
 
 
-
 # * Running ADMIXTURE
 
 registerDoMC(input_params$threads)
 
 # ** Create input and output names
 
-cv_error_file <- paste0( c(out_dir_for_stats, input_params$name, "cv_errors.csv"), collapse = "" )
+cv_error_file <- file.path(
+  out_dir_for_stats,
+  paste0(c(input_params$name, "_cv_errors.csv"), collapse = "" )
+)
 
 admixture_output_names <- c()
 for(i in 2:input_params$max_K){
@@ -235,5 +238,5 @@ plotting_command <- paste0(c(
   "-name", input_params$run_name
 ), collapse = ' ')
 
-## print(plotting_command)
+print(plotting_command)
 system(plotting_command)
