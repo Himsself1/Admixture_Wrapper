@@ -10,7 +10,8 @@ list_of_packages <- c(
   "grid", "ggh4x",
   "stringr", "ggforce",
   "argparse", "stringr",
-  "Cairo"
+  "Cairo", "plotly",
+  "htmlwidgets", "htmltools"
 )
 
 for (i in list_of_packages) {
@@ -46,7 +47,7 @@ parser$add_argument("-label_file",
 
 parser$add_argument("-meta",
   default = T, action = "store", type = "character",
-  help = "File that contains the Individuals' labels that are to be plotted in csv format"
+  help = "File that contains the Individuals' labels that are to be plotted in tsv format"
 )
 
 parser$add_argument("-name",
@@ -87,22 +88,9 @@ for (files_to_plot in q.files) {
   colnames(admix_data) <- paste0(rep("comp_", kappa), 1:kappa)
 
   labels <- read.table(label_file, sep = "\t", header = F)
-  ## colnames(labels) <- c("ID", "Date", "Include_1", "Include_2", "Location", "Layer_1", "Layer_2", "Layer_3")
   meta_data <- read.table(meta_file, header = T, sep = '\t') ## We need this to fix the order of samples in the labels file
-  ## colnames(meta_data) <- c("id", "sex", "Population")
-
-  ## The following lines text mine names individual names for the date estimates
-  ## temp_str_1 <- str_extract( labels$Include_1, "\\d+\\w*(\\-|_)\\d+" )
-  ## temp_letters <- str_extract( temp_str_1, "[A-Z]+" )
-  ## old_estimate <- as.numeric(str_extract( temp_str_1, "^\\d+" ))
-  ## young_estimate <- as.numeric(str_extract( temp_str_1, "\\d+$" ))
-  ## temp_sign_left <- ifelse((old_estimate > young_estimate),-1,1 )
-  ## temp_sign_right <- ifelse(is.na(temp_letters), -1,1 )
-  ## date_midpoint <- (old_estimate*temp_sign_left + young_estimate*temp_sign_right)/2
-  ## labels$midpoint <- date_midpoint
-  ## labels$Layer_3 <- reorder(labels$Layer_3, labels$midpoint, FUN = mean)
   
-  ## Labels file isn't in the same order as meta file.
+  ## Matches order of individuals of .ind/.fam and metadata
   if( grep( "\\.fam$", label_file )){
     correct_order_of_labels <- unlist(lapply(labels[, 2], function(x) {
       which(meta_data[, 1] %in% x)
@@ -125,6 +113,7 @@ for (files_to_plot in q.files) {
   ## Not all individuals might be represented in labels file.
 
   meta_data <- meta_data[sort(correct_order_of_labels, decreasing = FALSE), ]
+  colnames(meta_data) <- c("ID", "Layer_1", "Layer_2")
   admix_data <- admix_data[names_in_labels, ]
   labels <- labels[names_in_labels, ]
 
@@ -136,7 +125,7 @@ for (files_to_plot in q.files) {
 
   melted_to_plot <- melted_data %>%
     dplyr::group_by(Layer_1) ## %>%
-    ## dplyr::arrange(desc(comp_1), id)
+  ## dplyr::arrange(desc(comp_1), id)
   ## colnames(melted_to_plot)
 
 
@@ -218,16 +207,23 @@ for (files_to_plot in q.files) {
     ## scale_x_discrete(label=function(x) abbreviate(x, minlength=3, strict = TRUE)) +
     scale_fill_gdocs(guide = "none")
   
-  plot_file_name <- paste0(plot_folder, "/", name, kappa, ".png", collapse = "")
+  plot_file_name <- file.path(plot_folder, paste0(c(name, kappa, ".png"), collapse = "") )
   print(plot_file_name)
   Cairo( file = plot_file_name, type = "png", height = 1440, width = 1024, dpi = 45, pointsize = 12 )
   print(k2plot)
   dev.off()
 
-  plot_file_name_pdf <- paste0(plot_folder, "/", name, kappa, ".pdf", collapse = "")
+  plot_file_name_pdf <- file.path(plot_folder, paste0(c(name, kappa, ".pdf"), collapse = "") )
   print(plot_file_name_pdf)
   Cairo(file = plot_file_name_pdf, type = "pdf", height = 1440, dpi = 45, pointsize = 12 )
   print(k2plot_pdf)
   dev.off()
+
+  ## This code is supposed to print interactive html plots, but they look horrible
+  ## plot_file_name_html <- file.path(plot_folder, paste0(c(name, kappa, ".html"), collapse = "") )
+  ## print(plot_file_name_html)
+  ## html_plot <- ggplotly(k2plot_pdf)
+  ## ## saveWidget(k2plot, plot_file_name_html)
+  ## saveWidget(html_plot, basename(plot_file_name_html))
   
 }

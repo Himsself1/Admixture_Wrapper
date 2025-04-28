@@ -144,6 +144,7 @@ if( input_params$ld_prune == TRUE ){
   )
 
 } else {
+  trimmed_prefix <- no_family_prefix
   fam_file <- grep(
     ".fam",
     list.files(out_dir_for_data, pattern = basename(no_family_prefix), full.names = T),
