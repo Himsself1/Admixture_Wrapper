@@ -104,7 +104,7 @@ if( input_params$ld_prune == TRUE ){
   print(command_for_plink_filtering)
   system(command_for_plink_filtering)
   pruned_in <- grep(
-    "prune.in",
+    "prune.in$",
     list.files(out_dir_for_data, pattern = basename(filter_prefix), full.names = T),
     value = T
   )
@@ -128,17 +128,17 @@ if( input_params$ld_prune == TRUE ){
   system(command_for_plink_trimming)
   # These are the names of input files for ADMIXTURE and plots.
   fam_file <- grep(
-    ".fam",
+    ".fam$",
     list.files(out_dir_for_data, pattern = basename(trimmed_prefix), full.names = T),
     value = T
   )
   bim_file <- grep(
-    ".bim",
+    ".bim$",
     list.files(out_dir_for_data, pattern = basename(trimmed_prefix), full.names = T),
     value = T
   )
   bed_file <- grep(
-    ".bed",
+    ".bed$",
     list.files(out_dir_for_data, pattern = basename(trimmed_prefix), full.names = T),
     value = T
   )
@@ -146,17 +146,17 @@ if( input_params$ld_prune == TRUE ){
 } else {
   trimmed_prefix <- no_family_prefix
   fam_file <- grep(
-    ".fam",
+    ".fam$",
     list.files(out_dir_for_data, pattern = basename(no_family_prefix), full.names = T),
     value = T
   )
   bim_file <- grep(
-    ".bim",
+    ".bim$",
     list.files(out_dir_for_data, pattern = basename(no_family_prefix), full.names = T),
     value = T
   )
   bed_file <- grep(
-    ".bed",
+    ".bed$",
     list.files(out_dir_for_data, pattern = basename(no_family_prefix), full.names = T),
     value = T
   )
