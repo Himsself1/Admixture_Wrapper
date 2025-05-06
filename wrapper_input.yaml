@@ -11,3 +11,4 @@ ld_prune: True # Boolean. Should ld trimming be performed.
 ld_window: 100 # Base pair window for ld trimming
 ld_step: 10 # Step for ld trimming.
 ld_r: 0.3 # correlation threeshold for ld trimming.
+geno: 0.1 # Filters out all variants with missing call rates exceeding the provided value

@@ -96,6 +96,7 @@ if( input_params$ld_prune == TRUE ){
       "plink2 --bfile", no_family_prefix,
       "--indep-pairwise", input_params$ld_window, input_params$ld_step, input_params$ld_r,
       "--maf 0.05",
+      "--geno", input_params$geno,
       "--out", filter_prefix,
       "--allow-no-sex --keep-allele-order --no-pheno"
     ),
