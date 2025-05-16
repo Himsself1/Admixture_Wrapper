@@ -40,6 +40,14 @@ if( length(input_files) < 3 ){
   }
 }
 
+if( input_params$project_excluded == TRUE ){
+  if( input_params$family_file < 1 ){
+    cat(sprintf("Projection of excluded samples was requested but no file was provided"))
+    cat(sprintf("Please include a 'family_file'"))
+    stop("Stop 4")
+  }
+}
+  
 # ** Create output folders
 initial_dir <- getwd()
 out_dir_full_name <- file.path(input_params$output_folder, input_params$run_name)
@@ -49,7 +57,10 @@ out_dir_for_stats <- file.path(out_dir_full_name, "stats")
 dir.create(out_dir_for_plots, recursive = TRUE)
 dir.create(out_dir_for_stats, recursive = TRUE)
 dir.create(out_dir_for_data, recursive = TRUE)
-
+if(input_params$project_excluded == TRUE ){
+  out_dir_for_excluded <- file.path(out_dir_for_data, "excluded")
+  dir.create(out_dir_for_excluded)
+}
 
 # * Call Plink for trimming
 
@@ -75,6 +86,31 @@ if( input_params$family_file > 1 ){
   )
   print(command_for_plink_relatives)
   system(command_for_plink_relatives)
+
+# *** Build dataset of excluded individuals for projection if requested
+
+  if( input_params$project_excluded == TRUE ){
+    excluded_prefix <- file.path(
+      out_dir_for_excluded,
+      paste0(c(
+        input_params$prefix,
+        "_excluded"), collapse = ''
+        )
+    )
+
+    command_for_plink_excluded <- paste0(
+      c(
+        "plink2 --bfile", initial_prefix,
+        "--keep", input_params$family_file,
+        "--out", excluded_prefix,
+        "--chr 1-22 --make-bed --allow-no-sex --keep-allele-order --no-pheno --set-all-var-ids '@_#_$r_$a' "
+      ),
+      collapse = ' '
+    )
+    print(command_for_plink_excluded)
+    system(command_for_plink_excluded)
+  }
+  
 } else {
   no_family_prefix <- file.path(out_dir_for_data, input_params$prefix)
 }
@@ -144,7 +180,45 @@ if( input_params$ld_prune == TRUE ){
     value = T
   )
 
+  ## Filter the 'exluded' dataset.
+  if( input_params$project_excluded = TRUE ){
+
+    excluded_trimmed_prefix <- file.path(
+      out_dir_for_excluded,
+      paste0(c(input_params$prefix,
+               "_excluded_trimmed"), collapse = '')
+    )
+    ## Filter the 'excluded' dataset using the SNPs from the original.
+    command_for_plink_trimming_for_excluded_individuals <- paste0(
+    c(
+      "plink2 --bfile", excluded_prefix,
+      "--extract", pruned_in, "--make-bed",
+      "--out", excluded_trimmed_prefix,
+      "--allow-no-sex --keep-allele-order --no-pheno"
+    ),
+    collapse = " "
+  )
+    print(command_for_plink_trimming_for_excluded_individuals)
+    system(command_for_plink_trimming_for_excluded_individuals)
+
+    fam_file <- grep(
+      ".fam$",
+      list.files(out_dir_for_excluded, pattern = basename(excluded_trimmed_prefix), full.names = T),
+      value = T
+    )
+    bim_file <- grep(
+      ".bim$",
+      list.files(out_dir_for_excluded, pattern = basename(excluded_trimmed_prefix), full.names = T),
+      value = T
+    )
+    bed_file <- grep(
+      ".bed$",
+      list.files(out_dir_for_excluded, pattern = basename(excluded_trimmed_prefix), full.names = T),
+      value = T
+    )
+  }
 } else {
+  # These are the names of input files for ADMIXTURE and plots if no prunning was performed
   trimmed_prefix <- no_family_prefix
   fam_file <- grep(
     ".fam$",
@@ -180,7 +254,7 @@ for(i in 2:input_params$max_K){
   temp_output <- paste0(c(
     out_dir_for_stats,
     input_params$name,
-    "K_", i, ".haploid.out"
+    "K_", i, ".out"
   ), collapse = '')
   admixture_output_names <- c(admixture_output_names, temp_output)
 }
@@ -229,7 +303,7 @@ plot_cv_error_command <- paste0(c(
 print(plot_cv_error_command)
 system(plot_cv_error_command)
 
-## ## Make command for plotting script
+## Make command for plotting script
 
 plotting_command <- paste0(c(
   "Rscript generalized_plotting.R -input_folder", out_dir_for_stats,
