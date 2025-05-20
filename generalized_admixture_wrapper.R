@@ -59,7 +59,9 @@ dir.create(out_dir_for_stats, recursive = TRUE)
 dir.create(out_dir_for_data, recursive = TRUE)
 if(input_params$project_excluded == TRUE ){
   out_dir_for_excluded <- file.path(out_dir_for_data, "excluded")
-  dir.create(out_dir_for_excluded)
+  dir.create(out_dir_for_excluded, recursive = TRUE)
+  out_dir_for_excluded_stats <- file.path(out_dir_for_stats, "excluded")
+  dir.create(out_dir_for_excluded_stats, recursive = TRUE)
 }
 
 # * Call Plink for trimming
@@ -181,7 +183,7 @@ if( input_params$ld_prune == TRUE ){
   )
 
   ## Filter the 'exluded' dataset.
-  if( input_params$project_excluded = TRUE ){
+  if( input_params$project_excluded == TRUE ){
 
     excluded_trimmed_prefix <- file.path(
       out_dir_for_excluded,
@@ -201,22 +203,23 @@ if( input_params$ld_prune == TRUE ){
     print(command_for_plink_trimming_for_excluded_individuals)
     system(command_for_plink_trimming_for_excluded_individuals)
 
-    fam_file <- grep(
+    fam_file_excluded <- grep(
       ".fam$",
       list.files(out_dir_for_excluded, pattern = basename(excluded_trimmed_prefix), full.names = T),
       value = T
     )
-    bim_file <- grep(
+    bim_file_excluded <- grep(
       ".bim$",
       list.files(out_dir_for_excluded, pattern = basename(excluded_trimmed_prefix), full.names = T),
       value = T
     )
-    bed_file <- grep(
+    bed_file_excluded <- grep(
       ".bed$",
       list.files(out_dir_for_excluded, pattern = basename(excluded_trimmed_prefix), full.names = T),
       value = T
-    )
+    ) 
   }
+  
 } else {
   # These are the names of input files for ADMIXTURE and plots if no prunning was performed
   trimmed_prefix <- no_family_prefix
@@ -251,12 +254,28 @@ cv_error_file <- file.path(
 
 admixture_output_names <- c()
 for(i in 2:input_params$max_K){
-  temp_output <- paste0(c(
+  temp_output <- file.path(
     out_dir_for_stats,
-    input_params$name,
-    "K_", i, ".out"
-  ), collapse = '')
+    sprintf(
+      "%s_K_%03d.out",
+      input_params$run_name, i
+    )
+  )
   admixture_output_names <- c(admixture_output_names, temp_output)
+}
+
+if( input_params$project_excluded == TRUE ){
+  admixture_output_names_for_excluded <- c()
+  for(i in 2:input_params$max_K){
+    temp_output <- file.path(
+      out_dir_for_excluded_stats,
+      sprintf(
+      "%s_K_%03d.out",
+      input_params$run_name, i
+      )
+    )
+    admixture_output_names_for_excluded <- c(admixture_output_names_for_excluded, temp_output)
+  }
 }
 
 # ** System calls
@@ -289,6 +308,24 @@ for (i in 1:length(admixture_output_names)) {
   system(cmd)
 }
 
+if( input_params$project_excluded == TRUE ){
+
+  original_p <- list.files( pattern = ".P$" )
+  modified_p <- sub( ".P$", ".projected.P", original_p )
+  file.copy( original_p, file.path( out_dir_for_excluded_stats, modified_p ) )
+  setwd( out_dir_for_excluded_stats )
+  foreach(i = 2:input_params$max_K) %dopar% {
+    cmd <- noquote(paste0(c(
+      "admixture32 -P",
+      bed_file_excluded, i,
+      '--seed time'
+    ), collapse = " "))
+    print(cmd)
+    system(cmd)
+  }
+
+}
+
 # * Plotting 
 
 setwd(initial_dir)
@@ -305,14 +342,27 @@ system(plot_cv_error_command)
 
 ## Make command for plotting script
 
-plotting_command <- paste0(c(
-  "Rscript generalized_plotting.R -input_folder", out_dir_for_stats,
-  "-plot_folder", out_dir_for_plots,
-  "-prefix", trimmed_prefix,
-  "-label_file", fam_file,
-  "-meta", input_params$metadata_file,
-  "-name", input_params$run_name
-), collapse = ' ')
+if(input_params$project_excluded == TRUE){
+  plotting_command <- paste0(c(
+    "Rscript generalized_plotting.R -input_folder", out_dir_for_stats,
+    "-plot_folder", out_dir_for_plots,
+    ## "-prefix", trimmed_prefix,
+    "-label_file", fam_file,
+    "-meta", input_params$metadata_file,
+    "-name", input_params$run_name,
+    "-projected_label_file", fam_file_excluded,
+    "-projected_input_folder", out_dir_for_excluded_stats
+  ), collapse = ' ')
+} else {
+  plotting_command <- paste0(c(
+    "Rscript generalized_plotting.R -input_folder", out_dir_for_stats,
+    "-plot_folder", out_dir_for_plots,
+    ## "-prefix", trimmed_prefix,
+    "-label_file", fam_file,
+    "-meta", input_params$metadata_file,
+    "-name", input_params$run_name
+  ), collapse = ' ')    
+}
 
 print(plotting_command)
 system(plotting_command)
