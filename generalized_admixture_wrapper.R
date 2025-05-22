@@ -188,7 +188,7 @@ if( input_params$ld_prune == TRUE ){
     excluded_trimmed_prefix <- file.path(
       out_dir_for_excluded,
       paste0(c(input_params$prefix,
-               "_excluded_trimmed"), collapse = '')
+               "_trimmed_excluded"), collapse = '')
     )
     ## Filter the 'excluded' dataset using the SNPs from the original.
     command_for_plink_trimming_for_excluded_individuals <- paste0(
@@ -217,7 +217,7 @@ if( input_params$ld_prune == TRUE ){
       ".bed$",
       list.files(out_dir_for_excluded, pattern = basename(excluded_trimmed_prefix), full.names = T),
       value = T
-    ) 
+    )
   }
   
 } else {
@@ -311,15 +311,15 @@ for (i in 1:length(admixture_output_names)) {
 if( input_params$project_excluded == TRUE ){
 
   original_p <- list.files( pattern = ".P$" )
-  modified_p <- sub( ".P$", ".projected.P", original_p )
+  modified_p <- sub( ".(\\d+).P$", "_excluded.\\1.P.in", original_p )
   file.copy( original_p, file.path( out_dir_for_excluded_stats, modified_p ) )
   setwd( out_dir_for_excluded_stats )
   foreach(i = 2:input_params$max_K) %dopar% {
-    cmd <- noquote(paste0(c(
-      "admixture32 -P",
-      bed_file_excluded, i,
-      '--seed time'
-    ), collapse = " "))
+    
+    cmd <- noquote(paste0(
+      c("admixture32 -P", bed_file_excluded, i, '--seed time'),
+      collapse = ' ' ))
+
     print(cmd)
     system(cmd)
   }
