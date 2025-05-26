@@ -266,13 +266,13 @@ for (counter in 1:length(q.files)) {
     ## scale_x_discrete(label=function(x) abbreviate(x, minlength=3, strict = TRUE)) +
     scale_fill_gdocs(guide = "none")
   
-  plot_file_name <- file.path(plot_folder, paste0(c(name, kappa, ".png"), collapse = "") )
+  plot_file_name <- file.path(plot_folder, paste0(c(name, "_", kappa, ".png"), collapse = "") )
   print(plot_file_name)
   Cairo( file = plot_file_name, type = "png", height = 1440, width = 1024, dpi = 45, pointsize = 12 )
   print(k2plot)
   dev.off()
 
-  plot_file_name_pdf <- file.path(plot_folder, paste0(c(name, kappa, ".pdf"), collapse = "") )
+  plot_file_name_pdf <- file.path(plot_folder, paste0(c(name, "_", kappa, ".pdf"), collapse = "") )
   print(plot_file_name_pdf)
   Cairo(file = plot_file_name_pdf, type = "pdf", height = 1440, dpi = 45, pointsize = 12 )
   print(k2plot_pdf)
@@ -365,13 +365,13 @@ for (counter in 1:length(q.files)) {
       ## scale_x_discrete(label=function(x) abbreviate(x, minlength=3, strict = TRUE)) +
       scale_fill_gdocs(guide = "none")
   
-    projected_plot_file_name <- file.path(plot_folder, paste0(c(name, kappa, ".projected.png"), collapse = "") )
+    projected_plot_file_name <- file.path(plot_folder, paste0(c(name, "_", kappa, ".projected.png"), collapse = "") )
     print(projected_plot_file_name)
     Cairo( file = projected_plot_file_name, type = "png", height = 1440, width = 1024, dpi = 45, pointsize = 12 )
     print(projected_k2plot)
     dev.off()
     
-    projected_plot_file_name_pdf <- file.path(plot_folder, paste0(c(name, kappa, ".projected.pdf"), collapse = "") )
+    projected_plot_file_name_pdf <- file.path(plot_folder, paste0(c(name, "_", kappa, ".projected.pdf"), collapse = "") )
     print(projected_plot_file_name_pdf)
     Cairo(file = projected_plot_file_name_pdf, type = "pdf", height = 1440, dpi = 45, pointsize = 12 )
     print(projected_k2plot_pdf)
