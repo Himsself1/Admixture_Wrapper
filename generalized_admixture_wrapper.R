@@ -82,6 +82,7 @@ if( input_params$family_file > 1 ){
       "plink2 --bfile", initial_prefix,
       "--remove", input_params$family_file,
       "--out", no_family_prefix,
+      "--geno", 0.99,
       "--chr 1-22 --make-bed --allow-no-sex --keep-allele-order --no-pheno --set-all-var-ids '@_#_$r_$a' "
     ),
     collapse = ' '
@@ -136,7 +137,7 @@ if( input_params$ld_prune == TRUE ){
       "--maf 0.05",
       "--geno", input_params$geno,
       "--out", filter_prefix,
-      "--allow-no-sex --keep-allele-order --no-pheno"
+      "--bad-ld --allow-no-sex --keep-allele-order --no-pheno"
     ),
     collapse = ' '
   )
@@ -238,6 +239,52 @@ if( input_params$ld_prune == TRUE ){
     list.files(out_dir_for_data, pattern = basename(no_family_prefix), full.names = T),
     value = T
   )
+  if( input_params$project_excluded == TRUE ){
+
+    excluded_trimmed_prefix <- file.path(
+      out_dir_for_excluded,
+      paste0(c(input_params$prefix,
+               "_trimmed_excluded"), collapse = '')
+    )
+
+    ## Match variants of the original dataset.
+    matching_variant_file_name <- file.path(dirname(excluded_prefix), "variant_list.txt")
+    command_for_plink_matching_variants <- paste0(
+      c( "awk '{print $2}'", bim_file, ">", matching_variant_file_name ),
+      collapse = ' ')
+    
+    print(command_for_plink_matching_variants)
+    system(command_for_plink_matching_variants)
+
+    command_for_plink_trimming_for_excluded_individuals <- paste0(
+      c(
+        "plink2 --bfile", excluded_prefix,
+        "--extract", matching_variant_file_name, "--make-bed",
+        "--out", excluded_trimmed_prefix,
+        "--allow-no-sex --keep-allele-order --no-pheno"
+      ),
+      collapse = " "
+    )
+    
+    print(command_for_plink_trimming_for_excluded_individuals)
+    system(command_for_plink_trimming_for_excluded_individuals)
+
+    fam_file_excluded <- grep(
+      ".fam$",
+      list.files(out_dir_for_excluded, pattern = basename(excluded_trimmed_prefix), full.names = T),
+      value = T
+    )
+    bim_file_excluded <- grep(
+      ".bim$",
+      list.files(out_dir_for_excluded, pattern = basename(excluded_trimmed_prefix), full.names = T),
+      value = T
+    )
+    bed_file_excluded <- grep(
+      ".bed$",
+      list.files(out_dir_for_excluded, pattern = basename(excluded_trimmed_prefix), full.names = T),
+      value = T
+    )
+  }
 }
 
 
