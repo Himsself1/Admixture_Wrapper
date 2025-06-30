@@ -4,11 +4,17 @@ prefix: "" # .ped or .bed formats are supported.
 output_folder: "" # Path to output folder. Folders that do not exist will be created.
 run_name: "" # Specify a name for the run.
 max_K: 10 # The maximum K that cross validation error is going to run. 
-threads: 2 # Number of threads for pararellization of ADMIXTURE call. This doesn't run ADMIXTURE in multi-threaded mode, rather makes ADMIXTURE calls parallel. No point in this being larger than max_K
+threads: 2 # Number of threads for pararellization of ADMIXTURE call. This doesn't run ADMIXTURE in multi-threaded mode, rather makes ADMIXTURE calls parallel. No point in this being larger than max_K-1
 family_file: "" # Space delimited file that contains relatives in the sample that need to be removed. Leave empty if not needed.
-# metdata_file: "" 
+metdata_file: "" # File with metadata information for sample. This file has 3 columns: ID | Wider | Narrower. ID should have the names of the samples as per the .fam files. 'Wider' and 'Narrower' refer to the nesting of labels in the final plot.
+
+geno: 0.1 # Filters out all variants with missing call rates exceeding the provided value
+## Parameters for ld prunning
 ld_prune: True # Boolean. Should ld trimming be performed.
 ld_window: 100 # Base pair window for ld trimming
 ld_step: 10 # Step for ld trimming.
 ld_r: 0.3 # correlation threeshold for ld trimming.
-geno: 0.1 # Filters out all variants with missing call rates exceeding the provided value
+
+
+## Parameter for projection of excluded samples.
+project_excluded: True # Boolean. Should excluded samples be used in ADMIXTURE projection.
