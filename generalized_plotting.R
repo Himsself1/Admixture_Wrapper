@@ -11,7 +11,8 @@ list_of_packages <- c(
   "stringr", "ggforce",
   "argparse", "stringr",
   "Cairo", "plotly",
-  "htmlwidgets", "htmltools"
+  "htmlwidgets", "htmltools",
+  "dplyr"
 )
 
 for (i in list_of_packages) {
@@ -161,7 +162,9 @@ for (counter in 1:length(q.files)) {
     projected_admix_data <- admix_data[projected_names_in_labels, ]
     projected_labels <- labels[projected_names_in_labels, ]
 
-    projected_to_melt <- cbind(projected_meta_data, projected_admix_data)
+    projected_to_melt <- cbind(projected_meta_data, projected_admix_data) %>%
+      group_by(Layer_1, Layer_2) %>%
+      arrange(across(all_of(paste0(rep("comp_", kappa), 1:kappa))), .by_group = T)
     projected_melted_data <- melt(projected_to_melt, measure.vars = paste0(rep("comp_", kappa), 1:kappa))
   }
   
@@ -173,16 +176,11 @@ for (counter in 1:length(q.files)) {
   admix_data <- admix_data[names_in_labels, ]
   labels <- labels[names_in_labels, ]
 
-  to_melt <- cbind(meta_data, admix_data)
-
+  to_melt <- cbind(meta_data, admix_data) %>%
+    group_by(Layer_1, Layer_2) %>%
+    arrange(across(all_of(paste0(rep("comp_", kappa), 1:kappa))), .by_group = T)
+  
   melted_data <- melt(to_melt, measure.vars = paste0(rep("comp_", kappa), 1:kappa))
-
-  ## Write the function that will make the plot
-
-  ## melted_to_plot <- melted_data %>%
-  ##   dplyr::group_by(Layer_1) ## %>%
-  ## dplyr::arrange(desc(comp_1), id)
-  ## colnames(melted_to_plot)
 
 # *** Plot in png
   
