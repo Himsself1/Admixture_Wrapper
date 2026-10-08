@@ -68,7 +68,7 @@ if(input_params$project_excluded == TRUE ){
 
 # ** Remove Relatives if file is provided
 
-if( input_params$family_file > 1 ){
+if( length(input_params$family_file) > 0 ){
   no_family_prefix <- file.path(
     out_dir_for_data,
     paste0(c(
