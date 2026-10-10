@@ -12,6 +12,14 @@ for (i in list_of_packages) {
 
 # * Command line arguments
 
+## Get the folder that admixture_wrapper is in.
+print(commandArgs(FALSE))
+wrapper_arg <- grep("^--file=", commandArgs(FALSE), value = TRUE)
+wrapper_folder <- dirname(normalizePath(sub("^--file=", "", wrapper_arg[1])))
+print(wrapper_folder)
+
+##stop()
+
 args<-commandArgs(TRUE)
 yaml_input <- args[1]
 
@@ -377,12 +385,20 @@ if( input_params$project_excluded == TRUE ){
 
 setwd(initial_dir)
 
-plot_cv_error_command <- paste0(c(
-  "Rscript plot_CV_error.R",
-  "-plot_folder", out_dir_for_plots,
-  "-input_file", cv_error_file,
-  "-name", input_params$run_name
-), collapse = ' ')
+## plot_cv_error_command <- paste0(c(
+##   "Rscript plot_CV_error.R",
+##   "-plot_folder", out_dir_for_plots,
+##   "-input_file", cv_error_file,
+##   "-name", input_params$run_name
+## ), collapse = ' ')
+
+plot_cv_error <- sprintf(
+  "Rscript %s -plot_folder %s -input_file %s -name %s",
+  shQuote(file.path(wrapper_folder, "plot_CV_error.R")),
+  shQuote(out_dir_for_plots),
+  shQuote(cv_error_file),
+  shQuote(input_params$run_name)
+)
 
 print(plot_cv_error_command)
 system(plot_cv_error_command)
@@ -390,25 +406,44 @@ system(plot_cv_error_command)
 ## Make command for plotting script
 
 if(input_params$project_excluded == TRUE){
-  plotting_command <- paste0(c(
-    "Rscript generalized_plotting.R -input_folder", out_dir_for_stats,
-    "-plot_folder", out_dir_for_plots,
-    ## "-prefix", trimmed_prefix,
-    "-label_file", fam_file,
-    "-meta", input_params$metadata_file,
-    "-name", input_params$run_name,
-    "-projected_label_file", fam_file_excluded,
-    "-projected_input_folder", out_dir_for_excluded_stats
-  ), collapse = ' ')
+  ## plotting_command <- paste0(c(
+  ##   "Rscript generalized_plotting.R -input_folder", out_dir_for_stats,
+  ##   "-plot_folder", out_dir_for_plots,
+  ##   ## "-prefix", trimmed_prefix,
+  ##   "-label_file", fam_file,
+  ##   "-meta", input_params$metadata_file,
+  ##   "-name", input_params$run_name,
+  ##   "-projected_label_file", fam_file_excluded,
+  ##   "-projected_input_folder", out_dir_for_excluded_stats
+  ## ), collapse = ' ')
+  plotting_command <- sprintf(
+    "Rscript %s -input_folder %s -plot_folder %s -label_file %s -meta %s -name %s -projected_label_file %s -projected_input_folder %s",
+    shQuote(file.path(wrapper_folder, "generalized_plotting.R")),
+    shQuote(out_dir_for_stats),
+    shQuote(out_dir_for_plots),
+    shQuote(fam_file),
+    shQuote(input_params$metadata_file),
+    shQuote(input_params$run_name),
+    shQuote(fam_file_excluded),
+    shQuote(out_dir_for_excluded_stats)
+  )
 } else {
-  plotting_command <- paste0(c(
-    "Rscript generalized_plotting.R -input_folder", out_dir_for_stats,
-    "-plot_folder", out_dir_for_plots,
-    ## "-prefix", trimmed_prefix,
-    "-label_file", fam_file,
-    "-meta", input_params$metadata_file,
-    "-name", input_params$run_name
-  ), collapse = ' ')    
+  ## plotting_command <- paste0(c(
+  ##   "Rscript generalized_plotting.R -input_folder", out_dir_for_stats,
+  ##   "-plot_folder", out_dir_for_plots,
+  ##   "-label_file", fam_file,
+  ##   "-meta", input_params$metadata_file,
+  ##   "-name", input_params$run_name
+  ## ), collapse = ' ')
+  plotting_command <- sprintf(
+    "Rscript %s -input_folder %s -plot_folder %s -label_file %s -meta %s -name %s",
+    shQuote(file.path(wrapper_folder, "generalized_plotting.R")),
+    shQuote(out_dir_for_stats),
+    shQuote(out_dir_for_plots),
+    shQuote(fam_file),
+    shQuote(input_params$metadata_file),
+    shQuote(input_params$run_name)
+  )
 }
 
 print(plotting_command)
