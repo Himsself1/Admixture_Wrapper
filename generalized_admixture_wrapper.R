@@ -304,7 +304,7 @@ registerDoMC(input_params$threads)
 
 cv_error_file <- file.path(
   out_dir_for_stats,
-  paste0(c(input_params$name, "_cv_errors.csv"), collapse = "" )
+  paste0(c(input_params$run_name, "_cv_errors.csv"), collapse = "" )
 )
 
 admixture_output_names <- c()
@@ -392,7 +392,7 @@ setwd(initial_dir)
 ##   "-name", input_params$run_name
 ## ), collapse = ' ')
 
-plot_cv_error <- sprintf(
+plot_cv_error_command <- sprintf(
   "Rscript %s -plot_folder %s -input_file %s -name %s",
   shQuote(file.path(wrapper_folder, "plot_CV_error.R")),
   shQuote(out_dir_for_plots),
