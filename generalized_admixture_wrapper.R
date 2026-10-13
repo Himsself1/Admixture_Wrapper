@@ -96,7 +96,8 @@ if( length(input_params$family_file) > 0 ){
     collapse = ' '
   )
   print(command_for_plink_relatives)
-  system(command_for_plink_relatives)
+  if(is.null(input_params$only_plot) || input_params$only_plot == FALSE)
+    system(command_for_plink_relatives)
 
 # *** Build dataset of excluded individuals for projection if requested
 
@@ -119,7 +120,8 @@ if( length(input_params$family_file) > 0 ){
       collapse = ' '
     )
     print(command_for_plink_excluded)
-    system(command_for_plink_excluded)
+    if(is.null(input_params$only_plot) || input_params$only_plot == FALSE)
+      system(command_for_plink_excluded)
   }
   
 } else {
@@ -150,7 +152,8 @@ if( input_params$ld_prune == TRUE ){
     collapse = ' '
   )
   print(command_for_plink_filtering)
-  system(command_for_plink_filtering)
+  if(is.null(input_params$only_plot) || input_params$only_plot == FALSE)
+    system(command_for_plink_filtering)
   pruned_in <- grep(
     "prune.in$",
     list.files(out_dir_for_data, pattern = basename(filter_prefix), full.names = T),
@@ -173,7 +176,8 @@ if( input_params$ld_prune == TRUE ){
     collapse = " "
   )
   print(command_for_plink_trimming)
-  system(command_for_plink_trimming)
+  if(is.null(input_params$only_plot) || input_params$only_plot == FALSE)
+      system(command_for_plink_trimming)
   # These are the names of input files for ADMIXTURE and plots.
   fam_file <- grep(
     ".fam$",
@@ -210,7 +214,8 @@ if( input_params$ld_prune == TRUE ){
     collapse = " "
   )
     print(command_for_plink_trimming_for_excluded_individuals)
-    system(command_for_plink_trimming_for_excluded_individuals)
+    if(is.null(input_params$only_plot) || input_params$only_plot == FALSE)
+      system(command_for_plink_trimming_for_excluded_individuals)
 
     fam_file_excluded <- grep(
       ".fam$",
@@ -262,7 +267,8 @@ if( input_params$ld_prune == TRUE ){
       collapse = ' ')
     
     print(command_for_plink_matching_variants)
-    system(command_for_plink_matching_variants)
+    if(is.null(input_params$only_plot) || input_params$only_plot == FALSE)
+      system(command_for_plink_matching_variants)
 
     command_for_plink_trimming_for_excluded_individuals <- paste0(
       c(
@@ -275,7 +281,8 @@ if( input_params$ld_prune == TRUE ){
     )
     
     print(command_for_plink_trimming_for_excluded_individuals)
-    system(command_for_plink_trimming_for_excluded_individuals)
+    if(is.null(input_params$only_plot) || input_params$only_plot == FALSE)
+      system(command_for_plink_trimming_for_excluded_individuals)
 
     fam_file_excluded <- grep(
       ".fam$",
@@ -307,6 +314,9 @@ cv_error_file <- file.path(
   paste0(c(input_params$run_name, "_cv_errors.csv"), collapse = "" )
 )
 
+if(file.exists(cv_error_file)) 
+  file.remove(cv_error_file)
+  
 admixture_output_names <- c()
 for(i in 2:input_params$max_K){
   temp_output <- file.path(
@@ -338,16 +348,17 @@ if( input_params$project_excluded == TRUE ){
 setwd( out_dir_for_stats )
 sporos <- runif(input_params$max_K)
 
-foreach(i = 2:input_params$max_K) %dopar% {
-  cmd <- noquote(paste0(c(
-    "admixture32 --cv",
-    bed_file, i,
-    '--seed time | tee',
-    admixture_output_names[i-1]
-  ), collapse = " "))
-  print(cmd)
-  system(cmd)
-}
+if(is.null(input_params$only_plot) || input_params$only_plot == FALSE) {
+  foreach(i = 2:input_params$max_K) %dopar% {
+    cmd <- noquote(paste0(c(
+      "admixture32 --cv",
+      bed_file, i,
+      '--seed time | tee',
+      admixture_output_names[i-1]
+    ), collapse = " "))
+    print(cmd)
+    system(cmd)
+}}
 
 ## CV Errors
 for (i in 1:length(admixture_output_names)) {
