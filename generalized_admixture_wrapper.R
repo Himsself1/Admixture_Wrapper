@@ -55,7 +55,11 @@ if( input_params$project_excluded == TRUE ){
     stop("Stop 4")
   }
 }
-  
+
+if(is.null(input_params$maf)) {
+  input_params$maf <- 0.05
+}
+
 # ** Create output folders
 initial_dir <- getwd()
 out_dir_full_name <- file.path(input_params$output_folder, input_params$run_name)
@@ -76,6 +80,7 @@ if(input_params$project_excluded == TRUE ){
 
 # ** Remove Relatives if file is provided
 
+## Remove individuals if family_file is provided, otherwise just perform maf filtering
 if( length(input_params$family_file) > 0 ){
   no_family_prefix <- file.path(
     out_dir_for_data,
@@ -91,14 +96,15 @@ if( length(input_params$family_file) > 0 ){
       "--remove", input_params$family_file,
       "--out", no_family_prefix,
       "--geno", 0.99,
+      "--maf", input_params$maf,
       "--chr 1-22 --make-bed --allow-no-sex --keep-allele-order --no-pheno --set-all-var-ids '@_#_$r_$a' "
     ),
     collapse = ' '
   )
   print(command_for_plink_relatives)
-  if(is.null(input_params$only_plot) || input_params$only_plot == FALSE)
+  if(is.null(input_params$only_plot) || input_params$only_plot == FALSE) {
     system(command_for_plink_relatives)
-
+  }
 # *** Build dataset of excluded individuals for projection if requested
 
   if( input_params$project_excluded == TRUE ){
@@ -120,12 +126,27 @@ if( length(input_params$family_file) > 0 ){
       collapse = ' '
     )
     print(command_for_plink_excluded)
-    if(is.null(input_params$only_plot) || input_params$only_plot == FALSE)
+    if(is.null(input_params$only_plot) || input_params$only_plot == FALSE) {
       system(command_for_plink_excluded)
+    }
   }
   
 } else {
   no_family_prefix <- file.path(out_dir_for_data, input_params$prefix)
+  command_for_plink_relatives <- paste0(
+    c(
+      "plink2 --bfile", initial_prefix,
+      "--out", no_family_prefix,
+      "--geno", 0.99,
+      "--maf", input_params$maf,
+      "--chr 1-22 --make-bed --allow-no-sex --keep-allele-order --no-pheno --set-all-var-ids '@_#_$r_$a' "
+    ),
+    collapse = ' '
+  )
+  print(command_for_plink_relatives)
+  if(is.null(input_params$only_plot) || input_params$only_plot == FALSE) {
+    system(command_for_plink_relatives)
+  }
 }
 
 # ** Filter SNPs in LD
@@ -144,7 +165,7 @@ if( input_params$ld_prune == TRUE ){
     c( 
       "plink2 --bfile", no_family_prefix,
       "--indep-pairwise", input_params$ld_window, input_params$ld_step, input_params$ld_r,
-      "--maf 0.05",
+      ## "--maf 0.05",
       "--geno", input_params$geno,
       "--out", filter_prefix,
       "--bad-ld --allow-no-sex --keep-allele-order --no-pheno"
@@ -152,8 +173,9 @@ if( input_params$ld_prune == TRUE ){
     collapse = ' '
   )
   print(command_for_plink_filtering)
-  if(is.null(input_params$only_plot) || input_params$only_plot == FALSE)
+  if(is.null(input_params$only_plot) || input_params$only_plot == FALSE) {
     system(command_for_plink_filtering)
+  }
   pruned_in <- grep(
     "prune.in$",
     list.files(out_dir_for_data, pattern = basename(filter_prefix), full.names = T),
@@ -176,8 +198,9 @@ if( input_params$ld_prune == TRUE ){
     collapse = " "
   )
   print(command_for_plink_trimming)
-  if(is.null(input_params$only_plot) || input_params$only_plot == FALSE)
-      system(command_for_plink_trimming)
+  if(is.null(input_params$only_plot) || input_params$only_plot == FALSE) {
+    system(command_for_plink_trimming)
+  }
   # These are the names of input files for ADMIXTURE and plots.
   fam_file <- grep(
     ".fam$",
@@ -194,10 +217,8 @@ if( input_params$ld_prune == TRUE ){
     list.files(out_dir_for_data, pattern = basename(trimmed_prefix), full.names = T),
     value = T
   )
-
   ## Filter the 'exluded' dataset.
   if( input_params$project_excluded == TRUE ){
-
     excluded_trimmed_prefix <- file.path(
       out_dir_for_excluded,
       paste0(c(input_params$prefix,
@@ -214,9 +235,9 @@ if( input_params$ld_prune == TRUE ){
     collapse = " "
   )
     print(command_for_plink_trimming_for_excluded_individuals)
-    if(is.null(input_params$only_plot) || input_params$only_plot == FALSE)
+    if(is.null(input_params$only_plot) || input_params$only_plot == FALSE) {
       system(command_for_plink_trimming_for_excluded_individuals)
-
+    }
     fam_file_excluded <- grep(
       ".fam$",
       list.files(out_dir_for_excluded, pattern = basename(excluded_trimmed_prefix), full.names = T),
@@ -233,7 +254,6 @@ if( input_params$ld_prune == TRUE ){
       value = T
     )
   }
-  
 } else {
   # These are the names of input files for ADMIXTURE and plots if no prunning was performed
   trimmed_prefix <- no_family_prefix
@@ -253,23 +273,20 @@ if( input_params$ld_prune == TRUE ){
     value = T
   )
   if( input_params$project_excluded == TRUE ){
-
     excluded_trimmed_prefix <- file.path(
       out_dir_for_excluded,
       paste0(c(input_params$prefix,
                "_trimmed_excluded"), collapse = '')
     )
-
     ## Match variants of the original dataset.
     matching_variant_file_name <- file.path(dirname(excluded_prefix), "variant_list.txt")
     command_for_plink_matching_variants <- paste0(
       c( "awk '{print $2}'", bim_file, ">", matching_variant_file_name ),
       collapse = ' ')
-    
     print(command_for_plink_matching_variants)
-    if(is.null(input_params$only_plot) || input_params$only_plot == FALSE)
+    if(is.null(input_params$only_plot) || input_params$only_plot == FALSE) {
       system(command_for_plink_matching_variants)
-
+    }
     command_for_plink_trimming_for_excluded_individuals <- paste0(
       c(
         "plink2 --bfile", excluded_prefix,
@@ -279,11 +296,10 @@ if( input_params$ld_prune == TRUE ){
       ),
       collapse = " "
     )
-    
     print(command_for_plink_trimming_for_excluded_individuals)
-    if(is.null(input_params$only_plot) || input_params$only_plot == FALSE)
+    if(is.null(input_params$only_plot) || input_params$only_plot == FALSE) {
       system(command_for_plink_trimming_for_excluded_individuals)
-
+    }
     fam_file_excluded <- grep(
       ".fam$",
       list.files(out_dir_for_excluded, pattern = basename(excluded_trimmed_prefix), full.names = T),
@@ -314,9 +330,10 @@ cv_error_file <- file.path(
   paste0(c(input_params$run_name, "_cv_errors.csv"), collapse = "" )
 )
 
-if(file.exists(cv_error_file)) 
+if(file.exists(cv_error_file)) {
   file.remove(cv_error_file)
-  
+}
+
 admixture_output_names <- c()
 for(i in 2:input_params$max_K){
   temp_output <- file.path(
@@ -375,21 +392,17 @@ for (i in 1:length(admixture_output_names)) {
 }
 
 if( input_params$project_excluded == TRUE ){
-
   original_p <- list.files( pattern = ".P$" )
   modified_p <- sub( ".(\\d+).P$", "_excluded.\\1.P.in", original_p )
   file.copy( original_p, file.path( out_dir_for_excluded_stats, modified_p ) )
   setwd( out_dir_for_excluded_stats )
   foreach(i = 2:input_params$max_K) %dopar% {
-    
     cmd <- noquote(paste0(
       c("admixture32 -P", bed_file_excluded, i, '--seed time'),
       collapse = ' ' ))
-
     print(cmd)
     system(cmd)
   }
-
 }
 
 # * Plotting 

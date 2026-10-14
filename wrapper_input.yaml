@@ -9,6 +9,7 @@ family_file: "" # Space delimited file that contains relatives in the sample tha
 metdata_file: "" # File with metadata information for sample. This file has 3 columns: ID | Wider | Narrower. ID should have the names of the samples as per the .fam files. 'Wider' and 'Narrower' refer to the nesting of labels in the final plot.
 
 geno: 0.1 # Filters out all variants with missing call rates exceeding the provided value
+maf: 0.05 # Minor allele threshold filtering.
 ## Parameters for ld prunning
 ld_prune: True # Boolean. Should ld trimming be performed.
 ld_window: 100 # Base pair window for ld trimming
